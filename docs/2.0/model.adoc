@@ -1,0 +1,183 @@
+= Model
+
+== xUnit
+
+If you at least once used testing framework, you probably faced with
+the standard test report as a number of XML files like this:
+
+[source]
+----
+...
+/test-results
+    ...
+    TEST-my.company.tests.routine.WeekdaysTest.xml
+    TEST-my.company.tests.routine.WeekendTest.xml
+----
+
+Each file has the following standard xUnit structure:
+
+[source, xml]
+.TEST-my.company.tests.routine.WeekendTest.xml
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.company.tests.routine.WeekendTest" time="0.019" tests="4" errors="1" skipped="1" failures="1"> <!--1-->
+
+  <properties> <!--2-->
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    [...]
+  </properties>
+
+  <testcase name="shouldHaveAGoodSleep" classname="my.company.tests.routine.WeekendTest" time="0.01"/> <!--3-->
+  <testcase name="shouldEatYourBreakfast" classname="my.company.tests.routine.WeekendTest" time="0.001">
+    <error type="Illegal State Exception"> <!--4-->
+    </error>
+  </testcase>
+  <testcase name="shouldGoForAWalk" classname="my.company.tests.routine.WeekendTest" time="0">
+    <skipped/> <!--5-->
+  </testcase>
+  <testcase name="shouldDrinkingAGlassOfWine" classname="my.company.tests.routine.WeekendTest" time="0.003">
+    <failure message="Expected: is 1 glass; but: was 3 glasses;" type="Assertion Error"> <!--6-->
+        Expected: is "1 glass"
+            but: was "3 glasses"
+            at my.company.tests.routine.WeekendTest.shouldDrinkingAGlassOfWine
+    </failure>
+  </testcase>
+
+</testsuite>
+
+----
+<1> General information about test suite
+<2> The defined properties at test execution
+<3> Test execution status. There are tree special statuses for `<testcase>` apart from `success`
+<4> `error` test encountered an error
+<5> `skipped` test was skipped
+<6> `failure` test failed
+
+Such report has two main drawbacks:
+
+. It is difficult to analyze. All test suits аre separated from others (не очень нравится)
+. There is only final result of the test case. There isn't any information what happened before the error occurs.
+
+Allure solve this problems.
+
+== Allure 1
+
+=== Aggregate test suites
+
+First, without any additional changes in your project, you can aggregate a default xUnit report as an Allure report.
+Just follow the instructions in this <<_get_started,section>>. Now you can see all test execution data in one report:
+
+image::defaul_xunit_data.png["Allure report with defaul xUnit data"]
+
+=== Track test case behaviour
+
+Second, to resolve the problem with lack of information about test case behaviours, we create special Allure XML format.
+This format actual for first generation of Allure report:
+
+[source, xml]
+.allure-testsuite.xml
+----
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:test-suite start="1497792365916" stop="1497792366101" version="1.5.3" ...> <!--1-->
+    <name>my.company.tests.routine.WeekendTest</name>
+    <title>Best weekend ever</title> <!--2-->
+    <test-cases>
+        <test-case start="1497792365916" stop="1497792365925" status="passed"> <!--3-->
+            <name>shouldWakeUp</name>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="" value=""/>
+            </labels>
+        </test-case>
+        <test-case start="1497792365926" stop="1497792365941" status="broken"> <!--4-->
+            <name>shouldEatYourBreakfast</name>
+            <failure>
+                <message>IllegalStateException: null</message>
+                <stack-trace>
+                    Illegal State Exception
+                    ...
+                </stack-trace>
+            </failure>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="" value=""/>
+            </labels>
+        </test-case>
+        <test-case start="1497792365943" stop="1497792365944" status="pending"> <!--5-->
+            <name>shouldGoForAWalk</name>
+            <failure>
+                <message>Test ignored (without reason)!</message>
+                <stack-trace>There are no stack trace</stack-trace>
+            </failure>
+            <steps/>
+            <attachments/>
+            <labels>
+                <label name="" value=""/>
+            </labels>
+        </test-case>
+        <test-case start="1497792365944" stop="1497792365968" status="failed">
+            <name>shouldDrinkingAGlassOfWine</name>
+            <failure>
+                <message>Assertion Error:
+                    Expected: is "1 glass"
+                        but: was "3 glasses"
+                </message>
+                <stack-trace> <!--6-->
+                    Assertion Error:
+                    Expected: is "1 glass"
+                        but: was "3 glasses"
+                    ...
+                </stack-trace>
+            </failure>
+            <steps> <!--7-->
+                <step start="1497793318189" stop="1497793318190" status="passed">
+                    <name>openABottleOfWine</name>
+                </step>
+                <step start="1497793318191" stop="1497793318191" status="passed">
+                    <name>takeAGlassOfWine</name>
+                </step>
+                <step start="1497793318193" stop="1497793318197" status="failed"> <!--8-->
+                    <name>shouldDrinkOnlyOneGlassOfWine</name>
+                </step>
+            </steps>
+            <attachments/>
+            <labels>
+                <label name="" value=""/>
+            </labels>
+        </test-case>
+    </test-cases>
+    <labels> <!--9-->
+        <label name="story" value="Weekend"/>
+        <label name="feature" value="Routine"/>
+        <label name="framework" value="JUnit"/>
+        <label name="language" value="JAVA"/>
+    </labels>
+</ns2:test-suite>
+----
+<1> Common information about test suit
+<2> You can add custom title for tests case or tests suite
+<3> Now we track start and end time
+<4> `broken` status is analog of `error`
+<5> `pending` status is analog of `skipped`
+<6> Save the full stack trace if any error is occurs
+<7> Steps show what happens inside the test
+<8> You can see in which place the test fails
+<9> Labels contains any meta information about tests executions
+
+Generate Allure report and see how it looks:
+
+image::allure_extended_data.png["Allure report with extended data"]
+
+=== Integration
+
+To create full value Allure report you should integrate him with your testing framework.
+There is a list of supported frameworks by language-based sections: <<_java,Java>>, <<_python,Python>>,
+<<_javascript,JavaScript>>, <<_ruby,Ruby>>, <<_groovy,Groovy>>, <<_php,PHP>>, <<__net,.Net>>, <<_scala,Scala>>.
+
+== Allure 2
+
+In the next generation of Allure report we use a JSON format data as a «native» for
+popular languages like Python, JavaScript.
+
