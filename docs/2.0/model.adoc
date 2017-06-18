@@ -55,7 +55,7 @@ Each file has the following standard xUnit structure:
 
 Such report has two main drawbacks:
 
-. It is difficult to analyze. All test suits аre separated from others (не очень нравится)
+. It is difficult to analyze. All test suits аre separated from others
 . There is only final result of the test case. There isn't any information what happened before the error occurs.
 
 Allure solve this problems.
@@ -67,7 +67,7 @@ Allure solve this problems.
 First, without any additional changes in your project, you can aggregate a default xUnit report as an Allure report.
 Just follow the instructions in this <<_get_started,section>>. Now you can see all test execution data in one report:
 
-image::defaul_xunit_data.png["Allure report with defaul xUnit data"]
+image::default_xunit_data.png["Allure report with defaul xUnit data"]
 
 === Track test case behaviour
 
